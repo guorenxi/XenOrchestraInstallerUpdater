@@ -4,7 +4,7 @@
 
 [![](https://img.shields.io/endpoint?url=https://xo-image.yawn.fi/downloads/status.json)](https://xo-image.yawn.fi/downloads/image.txt)
 
-[![](https://github.com/ronivay/XenOrchestraInstallerUpdater/actions/workflows/main.yml/badge.svg?branch=master)](https://github.com/ronivay/XenOrchestraInstallerUpdater/actions?query=workflow%3Axo-install) [![](https://github.com/ronivay/XenOrchestraInstallerUpdater/actions/workflows/lint.yml/badge.svg?branch=master)](https://github.com/ronivay/XenOrchestraInstallerUpdater/actions?query=workflow%3Alint)
+[![](https://github.com/ronivay/XenOrchestraInstallerUpdater/actions/workflows/main.yml/badge.svg)](https://github.com/ronivay/XenOrchestraInstallerUpdater/actions?query=workflow%3Axo-install) [![](https://github.com/ronivay/XenOrchestraInstallerUpdater/actions/workflows/lint.yml/badge.svg)](https://github.com/ronivay/XenOrchestraInstallerUpdater/actions?query=workflow%3Alint)
 
 Script to install/update [Xen Orchestra](https://xen-orchestra.com/#!/) and all of it's dependencies on multiple different Linux distributions. Separate script to be used on XenServer/XCP-ng host that installs a readymade VM image that has Xen Orchestra installed  utilizing the same installer script.
 
@@ -12,7 +12,7 @@ How about docker? No worries, check [Docker hub](https://hub.docker.com/r/roniva
 
 ### What is Xen Orchestra?
 
-Xen Orchestra is a web interface used to manage XenServer/XCP-ng hosts and pools. It runs separately and one can manage multiple different virtualization environments from one single management interface. 
+Xen Orchestra is a web interface used to manage XenServer/XCP-ng hosts and pools. It runs separately and one can manage multiple different virtualization environments from one single management interface.
 
 Xen Orchestra is developed by company called [Vates](https://vates.fr/). They offer Xen Orchestra as a turnkey appliance with different pricing models for different needs and even a free version with limited capabilities. This is the preferred and only supported method of using Xen Orchestra product as the appliance goes through QA and each of the plans come with support. I highly recommend using the official appliance if you plan on using Xen Orchestra in production environment, to support a great product and it's development now, and in the future.
 
@@ -23,7 +23,7 @@ If you're a home user/enthusiast with simple environment you want to manage but 
 
 Since Xen Orchestra is open source and majority of the paid features included in the official appliance are part of the sources, one can build it themself. This [procedure](https://xen-orchestra.com/docs/from_the_sources.html) is even documented. Note that even though this method is documented, it's not supported way of using Xen Orchestra and is intended to be used only for testing purposes and not in production.
 
-This script offers an easy way to install all dependencies, fetch source code, compile it and do all the little details for you which you'd have to do manually otherwise. Other than that, it follows the steps described in the official documentation. All source code for Xen Orchestra is by default pulled from the official [repository](https://github.com/vatesfr/xen-orchestra). 
+This script offers an easy way to install all dependencies, fetch source code, compile it and do all the little details for you which you'd have to do manually otherwise. Other than that, it follows the steps described in the official documentation. All source code for Xen Orchestra is by default pulled from the official [repository](https://github.com/vatesfr/xen-orchestra).
 
 **This script is not supported or endorsed by Xen Orchestra. Any issue you may have, please report it first to this repository.**
 
@@ -36,16 +36,20 @@ First thing you need is a VM (or even a physical machine if you wish) where to i
 
 Supported Linux distributions and versions:
 
-- CentOS 8
+- CentOS 9 Stream
+- CentOS 8 Stream
+- AlmaLinux 9
 - AlmaLinux 8
+- Rocky Linux 9
 - Rocky Linux 8
+- Debian 12
 - Debian 11
 - Debian 10
-- Debian 9
-- Debian 8
+- Ubuntu 24.04
+- Ubuntu 22.04
 - Ubuntu 20.04
-- Ubuntu 18.04
-- Ubuntu 16.04
+
+NOTE: By default, libvhdi-tools is not installed on RHEL based distros; so file-level restores from delta backups within XO will not work.  However, users MAY install libvhdi-tools via a small, third-party maintained by a user of XenOrchestraInstallerUpdater specifically for XenOrchestraInstallerUpdater in order to re-enable file-level restore. To do so, set the INSTALL_EL_LIBVHDI variable to "true" in xo-install.cfg.  See: https://github.com/ronivay/XenOrchestraInstallerUpdater/pull/274
 
 Only x86_64 architecture is supported. For all those raspberry pi users out there, check [container](https://hub.docker.com/r/ronivay/xen-orchestra) instead.
 
@@ -58,6 +62,8 @@ If you plan on using the prebuilt VM image for XenServer/XCP-ng, see the image s
 ### Installation
 
 Start by cloning this repository to the machine you wish to install to.
+
+See [Wiki](https://github.com/ronivay/XenOrchestraInstallerUpdater/wiki) for common configuration options
 
 There is a file called `sample.xo-install.cfg` which you should copy as `xo-install.cfg`. This file holds some editable configuration settings you might want to change depending on your needs.
 
@@ -78,11 +84,20 @@ update existing installation to the newest version available
 
 should be self explanatory. if you wish to rollback to another installation after doing update or whatever
 
+* `Install proxy`
+
+install all dependencies, necessary configuration and xen orchestra backup proxy
+
+* `Update proxy`
+
+update existing proxy installation to newest version available
+
+
 Each of these options can be run non interactively like so:
 
 ```
-sudo ./xo-install.sh --install
-sudo ./xo-install.sh --update [--force]
+sudo ./xo-install.sh --install [--proxy]
+sudo ./xo-install.sh --update [--proxy] [--force]
 sudo ./xo-install.sh --rollback
 ```
 
@@ -107,7 +122,10 @@ rpm:
 - libvhdi-tools
 - cifs-utils
 - lvm2
+- ntfs-3g
+- dmidecode
 - sudo (if set in xo-install.cfg)
+- patch
 
 deb:
 - apt-transport-https
@@ -121,16 +139,50 @@ deb:
 - redis-server
 - libpng-dev
 - git
-- python-minimal
-- python2-minimal (Ubuntu 20/Debian 11 only, replaces python-minimal)
+- python3-minimal
 - libvhdi-utils
 - lvm2
 - nfs-common
 - cifs-utils
 - gnupg (debian 10/11)
 - software-properties-common (ubuntu)
+- ntfs-3g
+- dmidecode
 - sudo (if set in xo-install.cfg)
+- patch
 ```
+
+Following repositories will be installed if needed and repository install is enabled in xo-install.cfg
+
+```
+rpm:
+- forensics repository
+- epel repository
+- nodesource repository
+- yarn repository
+
+deb:
+- universe repository (ubuntu)
+- nodesource repository
+- yarn repository
+```
+
+
+#### Backup proxy
+
+**Proxy installation method is experimental, use at your own risk. Proxy installation from sources is not documented by Xen Orchestra team. Method used here is the outcome of trial and error.**
+
+**Proxy source code will be edited slightly to disable license check which only works with official XOA and there is no documented or working procedure to bypass it properly (there used to be but not anymore)**
+
+Backup proxy can be used to offload backup tasks from the main Xen Orchestra instance to a proxy which has a direct connection to remote where backups are stored.
+
+Requirements for proxy VM are otherwise the same as mentioned above, in addition proxy needs to be able to connect your XCP-ng/XenServer host and Xen Orchestra server needs to be able to access proxy via configured port. By default, it is expected that proxy VM lives inside your XO managed XCP-ng/XenServer pool and XO will figure out the proper connection address with proxy VM's uuid and will use port 443 by default. If you've installed your proxy outside of XCP-ng/XenServer pool and/or you're using some other port, you need to edit the proxy server address from Proxies menu after importing the configuration.
+
+Majority of xo-install.cfg variables have no effect to proxy installation.
+
+Since there is no way in Xen Orchestra from sources to register a proxy via UI, the installation will output a piece of json after the proxy is installed. You need to copy this json string and save to a file. Then use the config import option in Xen Orchestra settings to import this piece of json to add proxy. This works as a partial config import and won't overwrite any existing config. Although it's good to take a config export backup just in case.
+
+Note that for obvious reasons some of the proxy features seen in Xen Orchestra UI aren't working, like upgrade button, upgrade check, redeploy, update appliance settings.
 
 #### Plugins
 
@@ -162,14 +214,20 @@ xo user has full sudo access. Xen Orchestra updates etc should be ran with sudo.
 
 This image is updated weekly. Latest build date and MD5/SHA256 checksum can be checked from [here](https://xo-image.yawn.fi/downloads/image.txt)
 
-Built and tested on XCP-ng 7.x
+Built and tested on XCP-ng 8.x
 
 ### Tests and VM image
 
-I run my own little implementation of automation consisting of ansible and virtual machines to test the installation on regular bases with CentOS 8, Ubuntu 20, Debian 11 and AlmaLinux 8. Test results are visible in badges on top of this readme.
+I run my own little implementation of automation consisting of ansible and virtual machines to test the installation on a regular basis with different operating systems. Test results are visible in badges on top of this readme.
 
 VM image is also built totally by me and distributed from webservers i maintain.
 
 ### Contributing
 
-Pull requests and issues (either real issues or just suggestions) are more than welcome. Note that i do not wish to make any modifications to Xen Orchestra source code as part of this script. 
+Pull requests and issues (either real issues or just suggestions) are more than welcome. Note that i do not wish to make any modifications to Xen Orchestra source code as part of this script.
+
+### Support
+
+If you find this project useful and want to support the development by covering some of the hosting costs that come from maintaining an XCP-ng server in a data center, use paypal donation link below.
+
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate/?business=LCX7UV7LUGNY6&no_recurring=0&currency_code=EUR)

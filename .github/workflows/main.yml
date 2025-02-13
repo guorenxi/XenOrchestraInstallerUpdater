@@ -1,18 +1,16 @@
 name: xo-install test
 on:
-  push:
-    paths:
-      - 'xo-install.sh'
-      - 'sample.xo-install.cfg'
   pull_request:
     paths:
       - 'xo-install.sh'
       - 'sample.xo-install.cfg'
+  workflow_dispatch:
+
 jobs:
   Test-Install:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v4
       - name: xo-install run
         run: sudo ./xo-install.sh --install
         shell: bash
